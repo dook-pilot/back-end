@@ -1,5 +1,5 @@
 # Introduction
-A django project to scrap information from websites and images. Built with django rest framework.
+A django project to scrap information from websites and images. Built with django rest framework. This contains all the API need to run the VNG-DOOK Pilot project for web and mobile application.
 # Installation
 pip install -r requirements.txt
 run the project by: python manage.py runserver
