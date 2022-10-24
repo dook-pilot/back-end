@@ -13,7 +13,29 @@ pip install -r requirements.txt
 All libraries can be installed by pip.
 
 # Directory Structure
-![directory_structure](https://i.ibb.co/3NgvPg2/dir.png)
+```
+
+VNG/
+├─ vng/
+│  ├─ __init__.py
+│  ├─ asgi.py
+│  ├─ settings.py
+│  ├─ urls.py
+│  ├─ wsgi.py
+├─ base/
+│  ├─ scrap_functions/
+│  │  ├─ license_number_with_company_name.py
+│  │  ├─ rdw_scrapper.py
+│  ├─ __init__.py
+│  ├─ admin.py
+│  ├─ apps.py
+│  ├─ models.py
+│  ├─ tests.py
+│  ├─ urls.py
+│  ├─ views.py
+├─ requirements.txt
+├─ manage.py
+```
 
 vng/ is the root directory of project. Inside root directory there are project directory (vng/) and application directory (base/).
 The project directory vng/ contains configurations of our project.
