@@ -1,10 +1,13 @@
 # Introduction
 A django project to scrap information from websites and images. Built with django rest framework. This contains all the API need to run the VNG-DOOK Pilot project for web and mobile application.
 # Installation
+Python version: python >= 3.4
 pip install -r requirements.txt
+All libraries can be installed by pip. 
 run the project by: python manage.py runserver
 # Directory Structure
 ![directory_structure](https://i.ibb.co/3NgvPg2/dir.png)
+
 vng/ is the root directory of project. Inside root directory there are project directory (vng/) and application directory (base/).
 The project directory vng/ contains configurations of our project.
 The base/ directory contains all of the scraping logics and functions. Inside base/ directory there is a folder called scrap_functions/ which contains two files.
