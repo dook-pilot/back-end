@@ -1,9 +1,15 @@
 # Introduction
 A django project to scrap information from websites and images. Built with django rest framework. This contains all the API need to run the VNG-DOOK Pilot project for web and mobile application.
 # Installation
-Python version: python >= 3.4
+First create a python environement.
+Python version should be: python >= 3.4
 pip install -r requirements.txt
-All libraries can be installed by pip. 
+All libraries can be installed by pip.
+# Installing PaddleOCR library
+1. clone the paddleOCR repository from here: https://github.com/PaddlePaddle/PaddleOCR.git
+2. activate python virtual environment
+3. go to paddleOCR directory
+4.  python setup.py install
 run the project by: python manage.py runserver
 # Directory Structure
 ![directory_structure](https://i.ibb.co/3NgvPg2/dir.png)
