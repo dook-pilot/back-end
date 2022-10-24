@@ -5,7 +5,25 @@ pip install -r requirements.txt
 run the project by: python manage.py runserver
 # Directory Structure
 ![directory_structure](https://i.ibb.co/3NgvPg2/dir.png)
-
+'''
+scrapper/           #Root Folder
+├── scrapper/       #Project Folder
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settigs.py
+│   ├── urls.py
+│   └── wsgi.py
+├── base/          #application folder
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── models.py
+│   ├── urls.py
+│   └── views.py  #All Scrapper API logic is inside this file
+├── db.sqlite3
+├── manage.py
+└── requirements.txt
+'''
 vng/ is the root directory of project. Inside root directory there are project directory (vng/) and application directory (base/).
 The project directory vng/ contains configurations of our project.
 The base/ directory contains all of the scraping logics and functions. Inside base/ directory there is a folder called scrap_functions/ which contains two files.
