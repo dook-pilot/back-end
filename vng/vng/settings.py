@@ -137,7 +137,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_ACCESS_KEY_ID = 'AKIAUCPINOCUJQWZO2FG'
-AWS_SECRET_ACCESS_KEY = '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'
-AWS_STORAGE_BUCKET_NAME = 'license-plate-company-images'
+AWS_ACCESS_KEY_ID = 'key_id'
+AWS_SECRET_ACCESS_KEY = 'secret_key'
+AWS_STORAGE_BUCKET_NAME = 'bucket-name'
 AWS_QUERYSTRING_AUTH = False
