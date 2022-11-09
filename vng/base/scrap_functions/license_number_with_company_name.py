@@ -82,16 +82,15 @@ class license_company_recognition_pipeline():
                         license_number = ''
                         result = (self.model_dict["ocr_model"]).ocr(image_path, cls=True)
                         ic = image.crop(r_box)
-                        for i in range(
-                                10):  # with the BLUR filter, you can blur a few times to get the effect you're seeking
+                        for i in range(10):  # with the BLUR filter, you can blur a few times to get the effect you're seeking
                             ic = ic.filter(ImageFilter.BLUR)
                         image.paste(ic, r_box)
                         for line in result:
                             license_number = license_number + " " + line[1][0]
                         plates.append(license_number.strip())
-                        print(f"Vehicle Licence Number:  {license_number}\n\n")
-                    else:
-                        print('No license number is detected')
+                        #print(f"Vehicle Licence Number:  {license_number}\n\n")
+                    #else:
+                       # print('No license number is detected')
         blurred_image_path = 'blurred_image.png'
         image.save(blurred_image_path)
 
@@ -147,7 +146,7 @@ class license_company_recognition_pipeline():
         return query
 
     def retrieving_final_results(self, detected_text):
-        print(self.csv_file_path)
+        #print(self.csv_file_path)
         df = pd.read_csv(self.csv_file_path)
         stop_words = self.finding_stopwords(df)
         indices = []
@@ -189,7 +188,7 @@ pipeline = license_company_recognition_pipeline(ocr_model_path='pretrained',
 models = pipeline.load_models() # load models
 
 def get_image_upload_license_company_res(image):
-    print('inside function license plate recognition')
+    #print('inside function license plate recognition')
     image = Image.open(io.BytesIO(image)).convert('RGB')
     # image = np.array(image)
     df_dict, plates = pipeline.run(image)
