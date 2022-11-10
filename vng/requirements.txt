@@ -4,7 +4,6 @@ async-generator==1.10
 attrdict==2.0.1
 attrs==22.1.0
 Babel==2.10.3
-backports.zoneinfo==0.2.1
 bce-python-sdk==0.8.74
 beautifulsoup4==4.11.1
 boto3==1.24.93
