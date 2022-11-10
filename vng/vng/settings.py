@@ -78,10 +78,14 @@ WSGI_APPLICATION = 'vng.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+   'default': {
+       'ENGINE': 'django.db.backends.postgresql',
+       'NAME': 'license_plate_company_data',
+       'USER': 'postgres',
+       'PASSWORD': 'ahsumr',
+       'HOST': '127.0.0.1',
+       'PORT': '5432',
+   }
 }
 
 
@@ -126,3 +130,9 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_ACCESS_KEY_ID = 'key_id'
+AWS_SECRET_ACCESS_KEY = 'secret_key'
+AWS_STORAGE_BUCKET_NAME = 'bucket name'
+AWS_QUERYSTRING_AUTH = False
