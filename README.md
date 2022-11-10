@@ -1,6 +1,17 @@
 # Introduction
 A django project to scrap information from websites and images. Built with django rest framework. This contains all the API need to run the VNG-DOOK Pilot project for web and mobile application.
 
+# Run this stuff (Work in Progress)
+
+$ docker-compose build
+$ docker-compose up
+
+# Destroy everything
+
+$ docker-compose down
+
+# Manual:
+
 # Installing PaddleOCR library
 
 If PaddleOCR makes trouble while installing it through requirements.txt, then install it via it's official repository.
