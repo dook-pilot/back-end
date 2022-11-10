@@ -78,7 +78,6 @@ WSGI_APPLICATION = 'vng.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-<<<<<<< HEAD
    'default': {
        'ENGINE': 'django.db.backends.postgresql',
        'NAME': 'db_name',
@@ -87,12 +86,6 @@ DATABASES = {
        'HOST': '127.0.0.1',
        'PORT': '5432',
    }
-=======
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
->>>>>>> parent of 3cd5fd0... modify license plate api, ec2, database
 }
 
 
@@ -136,7 +129,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-<<<<<<< HEAD
 CORS_ALLOW_ALL_ORIGINS = True
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
@@ -144,6 +136,3 @@ AWS_ACCESS_KEY_ID = 'key_id'
 AWS_SECRET_ACCESS_KEY = 'secret_key'
 AWS_STORAGE_BUCKET_NAME = 'bucket name'
 AWS_QUERYSTRING_AUTH = False
-=======
-CORS_ALLOW_ALL_ORIGINS = True
->>>>>>> parent of 3cd5fd0... modify license plate api, ec2, database
