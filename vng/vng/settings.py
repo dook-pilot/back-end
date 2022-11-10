@@ -80,9 +80,9 @@ WSGI_APPLICATION = 'vng.wsgi.application'
 DATABASES = {
    'default': {
        'ENGINE': 'django.db.backends.postgresql',
-       'NAME': 'license_plate_company_data',
-       'USER': 'postgres',
-       'PASSWORD': 'ahsumr',
+       'NAME': 'db_name',
+       'USER': 'db_user',
+       'PASSWORD': 'db_password',
        'HOST': '127.0.0.1',
        'PORT': '5432',
    }
