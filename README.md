@@ -57,8 +57,7 @@ This API accepts a GET request only. It also requires a parameter which is "plac
 
 # API function vngp1_predict_license_plate:
 This API accepts POST request only. It requires an image through the form from front-end side. It scraps the data from image using license_number_with_company_name.py file and send back the response in a json format.
-
-# API function rdw:
-This function accepts GET request only and it also requires a license number from the user. It finds the data of with the license number on [rdw](https://ovi.rdw.nl/default.aspx) website and scraps all the information. It then send that information back in json format..
+The RDW scrap function is called inside this API. When the data from image is extracted, the rdw scrap function will be called for each license number
+found in extracted data of image.
 
 
