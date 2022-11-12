@@ -2,7 +2,8 @@ from django.contrib import admin
 from .models import Company, LicensePlate, TargetImage
 
 class LicensePlateAdmin(admin.ModelAdmin):
-    readonly_fields=('company', 'target_image', 'license_number')
+    readonly_fields=('company', 'target_image',)
+
 class TargetImageAdmin(admin.ModelAdmin):
     readonly_fields=('company',)
 

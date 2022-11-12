@@ -5,15 +5,14 @@ from flask import Flask, request, jsonify
 from flask import request, abort
 from functools import wraps
 from base64 import encodebytes
-import boto3
 from joblib import dump, load
 import pandas as pd
 from PIL import Image
+from . import read_exifdata
 import numpy as np
 import ast
 import io
 import os
-from geopy.geocoders import Nominatim
 from PIL.ExifTags import TAGS
 from .scrap_functions import license_number_with_company_name
 from .models import Company, LicensePlate, TargetImage
@@ -63,6 +62,7 @@ def vngp1_predict_pre_extracted(request, place_type):
 @api_view(['POST'])
 def vngp1_predict_license_plate(request):
     file = request.data.get('file')
+    print(file)
     if file == "":
         return Response({'error': 'No file'})
     image_bytes = file.read()
@@ -71,18 +71,9 @@ def vngp1_predict_license_plate(request):
         
     license_plate_company_data = license_number_with_company_name.get_image_upload_license_company_res(image_bytes)
     # read metadata
-    lat = ''
-    lng = ''
-    image = Image.open("image.jpg")
-    exifdata = image.getexif()
-    for tagid in exifdata:
-        tagname = TAGS.get(tagid, tagid)
-        value = exifdata.get(tagid)
-        if tagname == 'GPSLatitude':
-            lat = value
-        if tagname == 'GPSLongitude':
-            lng = value
-    # calling rdw scraping function on each license number found in image
+    coordinates = read_exifdata.image_coordinates("image.jpg")
+    lat = coordinates[0]
+    lng = coordinates[1]
     rdw_scrapped_response = []
     for license_number in license_plate_company_data['license_number']:
         rdw_scrapped_response.append({license_number: rdw_scrapper.rdw_scrapper(license_number)})
@@ -106,6 +97,7 @@ def vngp1_predict_license_plate(request):
     targetImage = TargetImage(company=company)
     targetImage.image = file
     targetImage.save()
+    os.remove("image.jpg")
     
     for license_number in license_plate_company_data['license_number']:
         licensePlate = LicensePlate(company=company, target_image=targetImage)
@@ -114,8 +106,12 @@ def vngp1_predict_license_plate(request):
     
     
     return Response({"license_plate_company_data": license_plate_company_data, "license_numbers_data": rdw_scrapped_response})
-@api_view(['GET'])
-def rdw(request, license):
-    data = rdw_scrapper.rdw_scrapper(license)
-    return Response(data)
+# We are using RDW function inside the license-plate API. 
+# So No need to make seperate RDW API 
+
+
+# @api_view(['GET'])
+# def rdw(request, license):
+#     data = rdw_scrapper.rdw_scrapper(license)
+#     return Response(data)
 
