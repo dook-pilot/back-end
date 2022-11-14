@@ -8,12 +8,14 @@ from base64 import encodebytes
 from joblib import dump, load
 import pandas as pd
 from PIL import Image
+from . import read_exifdata
 import numpy as np
 import ast
 import io
 import os
-from geopy.geocoders import Nominatim
+from PIL.ExifTags import TAGS
 from .scrap_functions import license_number_with_company_name
+from .models import Company, LicensePlate, TargetImage
 # Create your views here.
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'dcm', 'tif'}
 def allowed_file(filename):
@@ -60,13 +62,56 @@ def vngp1_predict_pre_extracted(request, place_type):
 @api_view(['POST'])
 def vngp1_predict_license_plate(request):
     file = request.data.get('file')
+    print(file)
     if file == "":
         return Response({'error': 'No file'})
     image_bytes = file.read()
+    with open("image.jpg", "wb") as img:
+        img.write(image_bytes)
+        
     license_plate_company_data = license_number_with_company_name.get_image_upload_license_company_res(image_bytes)
-    return Response(license_plate_company_data)
-@api_view(['GET'])
-def rdw(request, license):
-    data = rdw_scrapper.rdw_scrapper(license)
-    return Response(data)
+    # read metadata
+    coordinates = read_exifdata.image_coordinates("image.jpg")
+    lat = coordinates[0]
+    lng = coordinates[1]
+    rdw_scrapped_response = []
+    for license_number in license_plate_company_data['license_number']:
+        rdw_scrapped_response.append({license_number: rdw_scrapper.rdw_scrapper(license_number)})
+    # storing into database
+    company = Company()
+    company.place_api_company_name = license_plate_company_data['place_api_company_name']
+    company.bovag_matched_name = license_plate_company_data['bovag_matched_name']
+    company.poitive_reviews = license_plate_company_data['poitive_reviews']
+    company.negative_reviews = license_plate_company_data['negative_reviews']
+    company.rating = license_plate_company_data['rating']
+    company.duplicate_location = license_plate_company_data['duplicate_location']
+    company.kvk_tradename = license_plate_company_data['kvk_tradename']
+    company.irregularities = license_plate_company_data['irregularities']
+    company.duplicates_found = license_plate_company_data['duplicates_found']
+    company.Bovag_registered = license_plate_company_data['Bovag_registered']
+    company.KVK_found = license_plate_company_data['KVK_found']
+    company.company_ratings = license_plate_company_data['company_ratings']
+    company.latitude = lat
+    company.longitude = lng
+    company.save()
+    targetImage = TargetImage(company=company)
+    targetImage.image = file
+    targetImage.save()
+    os.remove("image.jpg")
+    
+    for license_number in license_plate_company_data['license_number']:
+        licensePlate = LicensePlate(company=company, target_image=targetImage)
+        licensePlate.license_number = license_number
+        licensePlate.save()
+    
+    
+    return Response({"license_plate_company_data": license_plate_company_data, "license_numbers_data": rdw_scrapped_response})
+# We are using RDW function inside the license-plate API. 
+# So No need to make seperate RDW API 
+
+
+# @api_view(['GET'])
+# def rdw(request, license):
+#     data = rdw_scrapper.rdw_scrapper(license)
+#     return Response(data)
 
