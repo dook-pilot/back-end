@@ -15,6 +15,7 @@ from pathlib import Path
 import environ
 
 env = environ.Env()
+
 environ.Env.read_env()
 
 
@@ -26,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY")
+SECRET_KEY = env.str("SECRET_KEY", "supersecret")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -92,9 +93,9 @@ WSGI_APPLICATION = 'vng.wsgi.application'
 DATABASES = {
    'default': {
        'ENGINE': 'django.db.backends.postgresql',
-       'NAME': env("db_name"),
-       'USER': env("db_user"),
-       'PASSWORD': env("db_password"),
+       'NAME': env.str("DB_NAME", "cdf"),
+       'USER': env.str("DB_USER", "cdf"),
+       'PASSWORD': env.str("DB_PASSWORD", "insecure"),
        'HOST': '127.0.0.1',
        'PORT': '5432',
    }
@@ -148,7 +149,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
+AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY_ID", "missing")
+AWS_SECRET_ACCESS_KEY = env.str("AWS_SECRET_ACCESS_KEY", "missing")
+AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME", "missing")
 AWS_QUERYSTRING_AUTH = False

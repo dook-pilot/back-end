@@ -2,6 +2,7 @@ FROM python:3.10.8
 
 ENV PYTHONUNBUFFERED 1
 
+
 WORKDIR /usr/src/app
 
 RUN pip install --upgrade pip
