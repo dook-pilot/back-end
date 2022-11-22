@@ -1,0 +1,11 @@
+Name: San Marino, Turks and Caicos Islands
+FIPS: SM, TK
+ISO2: SM, TC,
+ISO3: SMR, TCA
+UN: 674, 796
+AREA: 0, 0
+POP2005: 30214, 24459
+REGION: 150, 19
+SUBREGION: 39, 29
+LON: 12.46, -71.95
+LAT: 43.942, 21.902
