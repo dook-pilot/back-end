@@ -19,6 +19,11 @@ def rdw_scrapper(license):
         element = WebDriverWait(driver, 5).until(
         EC.presence_of_all_elements_located((By.CLASS_NAME, "myTable"))
     )
+        # BRAND AND MODEL
+        brand = driver.find_element(By.XPATH, '/html/body/div[1]/form/div[5]/div[2]/div[1]/div/div[1]/h3[1]').get_attribute("innerHTML")
+        brand = brand.strip()
+        model = driver.find_element(By.XPATH, '/html/body/div[1]/form/div[5]/div[2]/div[1]/div/div[1]/p[1]').get_attribute("innerHTML")
+        model = model.strip()
         ########################################## CATEGORY BASIS ##################################################
         #
         # SECTION ALGEMEEN
@@ -487,6 +492,11 @@ def rdw_scrapper(license):
         flscaal_row_3_info = ""
         # CREATING RESPONSE DATA
         response_data = {
+            "isError": False,
+            "errMsg": None,
+            "title": license,
+            "param1": brand,
+            "param2": model,
             "status": 200,
             "categories": [
                 {
@@ -735,6 +745,7 @@ def rdw_scrapper(license):
                         }
                     ]
                 },
+                # category
                 {
                     "title": "Motor & Milieu",
                     "sections": [
@@ -952,6 +963,12 @@ def rdw_scrapper(license):
                                 },
                             ]
                         },
+                    ]
+                },
+                #category
+                {
+                    "title": "Technisch",
+                    "sections": [
                         {
                             "title": "Eigenschappen",
                             "data": [
@@ -1040,6 +1057,12 @@ def rdw_scrapper(license):
                                 },
                             ]
                         },
+                    ]
+                },
+                #category
+                {
+                    "title": "Fiscaal",
+                    "sections": [
                         {
                             "title": "Flscaal",
                             "data": [
@@ -1064,8 +1087,8 @@ def rdw_scrapper(license):
                     ]
                 }
             ]
-    }
+        }
         return (response_data)
     except TimeoutException:
         driver.close()
-        return ({"status": 404,"error": 'ASD is geen geldig kenteken. Voer een geldig kenteken in en klik op de knop "Zoeken".'})
+        return ({"isError": True, "errMsg": "ASD is geen geldig kenteken. Voer een geldig kenteken in en klik op de knop 'Zoeken'."})

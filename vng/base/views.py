@@ -8,12 +8,15 @@ from base64 import encodebytes
 from joblib import dump, load
 import pandas as pd
 from PIL import Image
+from . import read_exifdata
 import numpy as np
 import ast
 import io
 import os
-from geopy.geocoders import Nominatim
+from PIL.ExifTags import TAGS
 from .scrap_functions import license_number_with_company_name
+from .models import Company, LicensePlate, TargetImage
+from django.db import connection
 # Create your views here.
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'dcm', 'tif'}
 def allowed_file(filename):
@@ -60,13 +63,63 @@ def vngp1_predict_pre_extracted(request, place_type):
 @api_view(['POST'])
 def vngp1_predict_license_plate(request):
     file = request.data.get('file')
-    if file == "":
-        return Response({'error': 'No file'})
+    print(file)
+    if file == None:
+        return Response({'error': "Server Error: Please try with different image"})
     image_bytes = file.read()
+    with open("image.png", "wb") as img:
+        img.write(image_bytes)
+        
     license_plate_company_data = license_number_with_company_name.get_image_upload_license_company_res(image_bytes)
-    return Response(license_plate_company_data)
-@api_view(['GET'])
-def rdw(request, license):
-    data = rdw_scrapper.rdw_scrapper(license)
-    return Response(data)
+    # read metadata
+    coordinates = read_exifdata.image_coordinates("image.png")
+    lat = coordinates[0]
+    lng = coordinates[1]
+    rdw_scrapped_response = []
+    for license_number in license_plate_company_data['license_number']:
+        rdw_scrapped_response.append({license_number: rdw_scrapper.rdw_scrapper(license_number)})
+    # storing into database
+    try:
+        company = Company()
+        company.place_api_company_name = license_plate_company_data['place_api_company_name']
+        company.bovag_matched_name = license_plate_company_data['bovag_matched_name']
+        company.poitive_reviews = license_plate_company_data['poitive_reviews']
+        company.negative_reviews = license_plate_company_data['negative_reviews']
+        company.rating = license_plate_company_data['rating']
+        company.duplicate_location = license_plate_company_data['duplicate_location']
+        company.kvk_tradename = license_plate_company_data['kvk_tradename']
+        company.irregularities = license_plate_company_data['irregularities']
+        company.duplicates_found = license_plate_company_data['duplicates_found']
+        company.Bovag_registered = license_plate_company_data['Bovag_registered']
+        company.KVK_found = license_plate_company_data['KVK_found']
+        company.company_ratings = license_plate_company_data['company_ratings']
+        company.latitude = lat
+        company.longitude = lng
+        company.save()
+        targetImage = TargetImage(company=company)
+        targetImage.image = file
+        targetImage.save()
+        os.remove("image.png")
+        
+        for license_number in license_plate_company_data['license_number']:
+            licensePlate = LicensePlate(company=company, target_image=targetImage)
+            licensePlate.license_number = license_number
+            licensePlate.save()
+    except KeyError:
+        return Response({"license_plate_company_data": "No company data found", "license_numbers_data": rdw_scrapped_response})
+    
+    
+    return Response({"license_plate_company_data": license_plate_company_data, "license_numbers_data": rdw_scrapped_response})
 
+
+@api_view(['GET'])
+def mvt_tiles(request, zoom, x, y):
+    """
+    Custom view to serve Mapbox Vector Tiles for the custom polygon model.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT ST_AsMVT(tile) FROM (SELECT id, description, ST_AsMVTGeom(geometry, TileBBox(%s, %s, %s, 4326)) FROM core_mypolygon) AS tile", [zoom, x, y])
+        tile = bytes(cursor.fetchone()[0])
+        if not len(tile):
+            return Response("Erro 404")
+    return Response(tile)
