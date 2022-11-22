@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.contrib.gis.db import models
 # Create your models here.
 
 class Company(models.Model):
@@ -34,3 +34,9 @@ class LicensePlate(models.Model):
     license_number = models.CharField(max_length=100, null=True)
     def __str__(self):
         return self.license_number
+
+from django.contrib.gis.db import models
+
+class MyPolygon(models.Model):
+    description = models.CharField(max_length=255)
+    geometry = models.PolygonField(srid=4326)

@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from pathlib import Path
-import environ
+import environ, os
 env = environ.Env()
 environ.Env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'base',
     'rest_framework',
     "corsheaders",
+    "django.contrib.gis",
 ]
 
 MIDDLEWARE = [
@@ -87,7 +88,7 @@ WSGI_APPLICATION = 'vng.wsgi.application'
 # }
 DATABASES = {
    'default': {
-       'ENGINE': 'django.db.backends.postgresql',
+       'ENGINE': 'django.contrib.gis.db.backends.postgis',
        'NAME': env("db_name"),
        'USER': env("db_user"),
        'PASSWORD': env("db_password"),
@@ -130,7 +131,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
+STATIC_ROOT= os.path.join(BASE_DIR,'static')
 STATIC_URL = 'static/'
+STATICFILES_DIRS=[
+    os.path.join(BASE_DIR, 'staticfiles'),
+]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
