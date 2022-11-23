@@ -13,10 +13,13 @@ import numpy as np
 import ast
 import io
 import os
+from django.contrib.gis.geos import Point
 from PIL.ExifTags import TAGS
 from .scrap_functions import license_number_with_company_name
 from .models import Company, LicensePlate, TargetImage
 from django.db import connection
+import random, string
+
 # Create your views here.
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'dcm', 'tif'}
 def allowed_file(filename):
@@ -62,22 +65,28 @@ def vngp1_predict_pre_extracted(request, place_type):
 
 @api_view(['POST'])
 def vngp1_predict_license_plate(request):
+    # generating a random string to store image with a unique name
+    random_string = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(8))
     file = request.data.get('file')
     print(file)
     if file == None:
         return Response({'error': "Server Error: Please try with different image"})
+    file_name = random_string+str(file)
     image_bytes = file.read()
-    with open("image.png", "wb") as img:
+    with open(file_name, "wb") as img:
         img.write(image_bytes)
         
     license_plate_company_data = license_number_with_company_name.get_image_upload_license_company_res(image_bytes)
+    license_plate_company_data["status"] = True
+    license_plate_company_data["errMsg"] = None
     # read metadata
-    coordinates = read_exifdata.image_coordinates("image.png")
+    coordinates = read_exifdata.image_coordinates(file_name)
     lat = coordinates[0]
     lng = coordinates[1]
     rdw_scrapped_response = []
-    for license_number in license_plate_company_data['license_number']:
-        rdw_scrapped_response.append({license_number: rdw_scrapper.rdw_scrapper(license_number)})
+    if license_plate_company_data['license_number'] != "":
+        for license_number in license_plate_company_data['license_number']:
+            rdw_scrapped_response.append(rdw_scrapper.rdw_scrapper(license_number))
     # storing into database
     try:
         company = Company()
@@ -95,31 +104,77 @@ def vngp1_predict_license_plate(request):
         company.company_ratings = license_plate_company_data['company_ratings']
         company.latitude = lat
         company.longitude = lng
+        pnt = Point(float(lat), float(lng))
+        company.geom = pnt
         company.save()
         targetImage = TargetImage(company=company)
-        targetImage.image = file
+        targetImage.image = file_name
+        targetImage.image_name = file_name
         targetImage.save()
-        os.remove("image.png")
-        
-        for license_number in license_plate_company_data['license_number']:
-            licensePlate = LicensePlate(company=company, target_image=targetImage)
-            licensePlate.license_number = license_number
-            licensePlate.save()
+        get_image = TargetImage.objects.get(image_name=file_name)
+        os.remove(file_name)
+        if license_plate_company_data['license_number'] != "":
+            for license_number in license_plate_company_data['license_number']:
+                licensePlate = LicensePlate(company=company, target_image=targetImage)
+                licensePlate.license_number = license_number
+                licensePlate.save()
+        return Response({
+        "status": True,
+        "errMsg": None,
+        "image_url": get_image.image.url,
+        "license_plate_company_data": license_plate_company_data, 
+        "license_numbers_data": rdw_scrapped_response if len(rdw_scrapped_response) > 0 else None 
+        })
     except KeyError:
-        return Response({"license_plate_company_data": "No company data found", "license_numbers_data": rdw_scrapped_response})
-    
-    
-    return Response({"license_plate_company_data": license_plate_company_data, "license_numbers_data": rdw_scrapped_response})
-
-
-@api_view(['GET'])
-def mvt_tiles(request, zoom, x, y):
-    """
-    Custom view to serve Mapbox Vector Tiles for the custom polygon model.
-    """
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT ST_AsMVT(tile) FROM (SELECT id, description, ST_AsMVTGeom(geometry, TileBBox(%s, %s, %s, 4326)) FROM core_mypolygon) AS tile", [zoom, x, y])
-        tile = bytes(cursor.fetchone()[0])
-        if not len(tile):
-            return Response("Erro 404")
-    return Response(tile)
+        license_plate_company_data["status"] = False
+        license_plate_company_data["errMsg"] = "No company data found!"
+        company = Company()
+        company.place_api_company_name = ""
+        company.bovag_matched_name = ""
+        company.poitive_reviews = 0
+        company.negative_reviews = 0
+        company.rating = 0
+        company.duplicate_location = ""
+        company.kvk_tradename = ""
+        company.irregularities = ""
+        company.duplicates_found = ""
+        company.Bovag_registered = ""
+        company.KVK_found = ""
+        company.company_ratings = ""
+        company.latitude = lat
+        company.longitude = lng
+        pnt = Point(float(lat), float(lng))
+        company.geom = pnt
+        company.save()
+        targetImage = TargetImage(company=company)
+        targetImage.image = file_name
+        targetImage.save()
+        get_image = TargetImage.objects.get(image_name=file_name)
+        os.remove(file_name)
+        if license_plate_company_data['license_number'] != "":
+            for license_number in license_plate_company_data['license_number']:
+                licensePlate = LicensePlate(company=company, target_image=targetImage)
+                licensePlate.license_number = license_number
+                licensePlate.save()
+        
+        return Response({
+            "status": True,
+            "errMsg": None,
+            "image_url": get_image.image.url,
+            "license_plate_company_data": {
+            "place_api_company_name": "",
+            "bovag_matched_name": None,
+            "poitive_reviews": 0,
+            "negative_reviews": 0, 
+            "rating": "",
+            "duplicate_location": "",
+            "kvk_tradename": "",
+            "irregularities": "",
+            "duplicates_found": "",
+            "Bovag_registered": "",
+            "KVK_found": "",
+            "company_ratings": "",
+            "license_number": license_plate_company_data['license_number'] if len(license_plate_company_data['license_number']) > 0 else None
+            }, 
+            "license_numbers_data": rdw_scrapped_response if len(rdw_scrapped_response) > 0 else None
+            })
