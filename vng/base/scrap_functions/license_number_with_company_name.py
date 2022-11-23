@@ -190,10 +190,22 @@ models = pipeline.load_models() # load models
 def get_image_upload_license_company_res(image):
     #print('inside function license plate recognition')
     image = Image.open(io.BytesIO(image)).convert('RGB')
-    # image = np.array(image)
-    df_dict, plates = pipeline.run(image)
-    df_dict['license_number'] = plates
-    return df_dict
+    width, height = image.size
+    print(image.size)
+    if width >= 3000 or height >= 3000:
+        width = int(width/1.5)
+        height = int(height/1.5)
+        newsize = (width, height)
+        im1 = image.resize(newsize)
+        print(im1.size)
+        #im1.show()
+        df_dict, plates = pipeline.run(im1)
+        df_dict['license_number'] = plates
+        return df_dict
+    else:
+        df_dict, plates = pipeline.run(image)
+        df_dict['license_number'] = plates
+        return df_dict
 
 # image = Image.open('test_img5.jpg').convert('RGB')
 # df_dict = get_image_upload_res(image)

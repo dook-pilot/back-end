@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.contrib.gis.db import models
 # Create your models here.
 
 class Company(models.Model):
@@ -17,6 +17,8 @@ class Company(models.Model):
     company_ratings = models.CharField(max_length=50, null=True)
     latitude = models.CharField(max_length=255, null=True)
     longitude = models.CharField(max_length=255, null=True)
+    geom = models.PointField(srid=4326, spatial_index=True, null=True)
+    createdAt = models.TimeField(auto_now_add=True)
     def __str__(self):
         return self.place_api_company_name
     class Meta:
@@ -24,9 +26,10 @@ class Company(models.Model):
 
 class TargetImage(models.Model):
     image = models.FileField(upload_to='media/')
+    image_name = models.CharField(max_length=255, null=True)
     company = models.OneToOneField(Company, on_delete=models.CASCADE)
     def __str__(self):
-        return self.company.place_api_company_name
+        return self.image_name
 
 class LicensePlate(models.Model):
     company = models.ForeignKey(to=Company, on_delete=models.CASCADE)
