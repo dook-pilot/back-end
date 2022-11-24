@@ -492,12 +492,11 @@ def rdw_scrapper(license):
         flscaal_row_3_info = ""
         # CREATING RESPONSE DATA
         response_data = {
-            "isError": False,
+            "status": True,
             "errMsg": None,
             "title": license,
-            "param1": brand,
-            "param2": model,
-            "status": 200,
+            "car_company": brand,
+            "car_model": model,
             "categories": [
                 {
                     "title": "Basis",
@@ -1091,4 +1090,8 @@ def rdw_scrapper(license):
         return (response_data)
     except TimeoutException:
         driver.close()
-        return ({"isError": True, "errMsg": "ASD is geen geldig kenteken. Voer een geldig kenteken in en klik op de knop 'Zoeken'."})
+        return ({
+            "status": False,
+            "title": license,
+            "errMsg": "ASD is geen geldig kenteken. Voer een geldig kenteken in en klik op de knop 'Zoeken'."
+            })
