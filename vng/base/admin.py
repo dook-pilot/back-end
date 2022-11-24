@@ -6,11 +6,11 @@ class LicensePlateAdmin(admin.ModelAdmin):
     readonly_fields=('company', 'target_image',)
 
 class TargetImageAdmin(admin.ModelAdmin):
-    list_display=['id', 'image_name']
+    list_display=['image_id', 'image_name']
     readonly_fields=('company',)
 
 class CompanyAdmin(admin.ModelAdmin):
-    list_display=['id', 'place_api_company_name']
+    list_display=['company_id', 'place_api_company_name']
 # Register your models here.
 admin.site.register(Company, CompanyAdmin)
 admin.site.register(LicensePlate, LicensePlateAdmin)

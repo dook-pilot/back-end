@@ -18,7 +18,8 @@ from PIL.ExifTags import TAGS
 from .scrap_functions import license_number_with_company_name
 from .models import Company, LicensePlate, TargetImage
 from django.db import connection
-import random, string
+import random, string, uuid
+from django.core.files import File
 
 # Create your views here.
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'dcm', 'tif'}
@@ -65,22 +66,20 @@ def vngp1_predict_pre_extracted(request, place_type):
 
 @api_view(['POST'])
 def vngp1_predict_license_plate(request):
-    # generating a random string to store image with a unique name
-    random_string = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(8))
     file = request.data.get('file')
+    image_name = str(uuid.uuid4())+".jpg"
     print(file)
     if file == None:
         return Response({'error': "Server Error: Please try with different image"})
-    file_name = random_string+str(file)
     image_bytes = file.read()
-    with open(file_name, "wb") as img:
+    with open("image.jpg", "wb") as img:
         img.write(image_bytes)
         
     license_plate_company_data = license_number_with_company_name.get_image_upload_license_company_res(image_bytes)
     license_plate_company_data["status"] = True
     license_plate_company_data["errMsg"] = None
     # read metadata
-    coordinates = read_exifdata.image_coordinates(file_name)
+    coordinates = read_exifdata.image_coordinates("image.jpg")
     lat = coordinates[0]
     lng = coordinates[1]
     rdw_scrapped_response = []
@@ -89,7 +88,9 @@ def vngp1_predict_license_plate(request):
             rdw_scrapped_response.append(rdw_scrapper.rdw_scrapper(license_number))
     # storing into database
     try:
+        id = uuid.uuid4()
         company = Company()
+        company.company_id = id
         company.place_api_company_name = license_plate_company_data['place_api_company_name']
         company.bovag_matched_name = license_plate_company_data['bovag_matched_name']
         company.poitive_reviews = license_plate_company_data['poitive_reviews']
@@ -104,20 +105,32 @@ def vngp1_predict_license_plate(request):
         company.company_ratings = license_plate_company_data['company_ratings']
         company.latitude = lat
         company.longitude = lng
-        pnt = Point(float(lat), float(lng))
-        company.geom = pnt
+        
+        try:
+            pnt = Point(float(lat), float(lng))
+            company.geom = pnt
+        except ValueError:
+            return Response({
+                "status": False,
+                "errMsg": "No GPS Data Found! Please Upload Another Image."
+            })
         company.save()
+        image_id = uuid.uuid4()
         targetImage = TargetImage(company=company)
-        targetImage.image = file_name
-        targetImage.image_name = file_name
+        targetImage.image_id = image_id
+        targetImage.image = File(file=open("image.jpg", 'rb'), name=image_name)
+        targetImage.image_name = image_name
         targetImage.save()
-        get_image = TargetImage.objects.get(image_name=file_name)
-        os.remove(file_name)
+        get_image = TargetImage.objects.get(image_id=image_id)
+        updateCompanyImageUrl = Company.objects.get(company_id=id)
+        updateCompanyImageUrl.image_url = get_image.image.url
+        updateCompanyImageUrl.save()
         if license_plate_company_data['license_number'] != "":
             for license_number in license_plate_company_data['license_number']:
                 licensePlate = LicensePlate(company=company, target_image=targetImage)
                 licensePlate.license_number = license_number
                 licensePlate.save()
+        os.remove("image.jpg")
         return Response({
         "status": True,
         "errMsg": None,
@@ -126,9 +139,11 @@ def vngp1_predict_license_plate(request):
         "license_numbers_data": rdw_scrapped_response if len(rdw_scrapped_response) > 0 else None 
         })
     except KeyError:
+        id = uuid.uuid4()
         license_plate_company_data["status"] = False
         license_plate_company_data["errMsg"] = "No company data found!"
         company = Company()
+        company.company_id = id
         company.place_api_company_name = ""
         company.bovag_matched_name = ""
         company.poitive_reviews = 0
@@ -143,25 +158,38 @@ def vngp1_predict_license_plate(request):
         company.company_ratings = ""
         company.latitude = lat
         company.longitude = lng
-        pnt = Point(float(lat), float(lng))
-        company.geom = pnt
+        try:
+            pnt = Point(float(lat), float(lng))
+            company.geom = pnt
+        except ValueError:
+            return Response({
+                "status": False,
+                "errMsg": "No GPS Data Found! Please Upload Another Image."
+            })
         company.save()
+        image_id = uuid.uuid4()
         targetImage = TargetImage(company=company)
-        targetImage.image = file_name
+        targetImage.image_id = image_id
+        targetImage.image = File(file=open("image.jpg", 'rb'), name=image_name)
+        targetImage.image_name = image_name
         targetImage.save()
-        get_image = TargetImage.objects.get(image_name=file_name)
-        os.remove(file_name)
+        get_image = TargetImage.objects.get(image_id=image_id)
+        updateCompanyImageUrl = Company.objects.get(company_id=id)
+        updateCompanyImageUrl.image_url = get_image.image.url
+        updateCompanyImageUrl.save()
         if license_plate_company_data['license_number'] != "":
             for license_number in license_plate_company_data['license_number']:
                 licensePlate = LicensePlate(company=company, target_image=targetImage)
                 licensePlate.license_number = license_number
                 licensePlate.save()
-        
+        os.remove("image.jpg")
         return Response({
             "status": True,
             "errMsg": None,
             "image_url": get_image.image.url,
             "license_plate_company_data": {
+            "status": False,
+            "errMsg": "No company data found!",
             "place_api_company_name": "",
             "bovag_matched_name": None,
             "poitive_reviews": 0,

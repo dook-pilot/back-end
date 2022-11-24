@@ -497,7 +497,6 @@ def rdw_scrapper(license):
             "title": license,
             "car_company": brand,
             "car_model": model,
-            "status": 200,
             "categories": [
                 {
                     "title": "Basis",
