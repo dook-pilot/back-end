@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.gis.db import models
-import uuid
 # Create your models here.
 
 class Company(models.Model):
@@ -41,3 +40,9 @@ class LicensePlate(models.Model):
     license_number = models.CharField(max_length=100, null=True)
     def __str__(self):
         return self.license_number
+
+class LicenseDatabaseS3Link(models.Model):
+    license_number = models.CharField(max_length=100, null=True)
+    license_data_json = models.FileField(upload_to='license_data/')
+    def __str__(self):
+        return self.license_plate
