@@ -8,17 +8,13 @@ from base64 import encodebytes
 from joblib import dump, load
 import pandas as pd
 from PIL import Image
-from . import read_exifdata
+from . import read_exifdata, s3_config
 import numpy as np
-import ast
-import io
-import os
+import os, uuid, boto3, ast, io, base64
 from django.contrib.gis.geos import Point
 from PIL.ExifTags import TAGS
 from .scrap_functions import license_number_with_company_name
 from .models import Company, LicensePlate, TargetImage
-from django.db import connection
-import random, string, uuid
 from django.core.files import File
 
 # Create your views here.
@@ -83,9 +79,18 @@ def vngp1_predict_license_plate(request):
     lat = coordinates[0]
     lng = coordinates[1]
     rdw_scrapped_response = []
+    license_data_links = []
+    license_data_links_without_null = []
     if license_plate_company_data['license_number'] != "":
         for license_number in license_plate_company_data['license_number']:
-            rdw_scrapped_response.append(rdw_scrapper.rdw_scrapper(license_number))
+            rdw_scraped_data, license_data_link = rdw_scrapper.rdw_scrapper(license_number)
+            rdw_scrapped_response.append(rdw_scraped_data)
+            license_data_links.append(license_data_link)
+            # rdw_scrapped_response.append(rdw_scrapper.rdw_scrapper(license_number))
+    if len(license_data_links) > 0:
+        for link in license_data_links:
+            if link != None:
+                license_data_links_without_null.append(link)
     # storing into database
     try:
         id = uuid.uuid4()
@@ -135,6 +140,7 @@ def vngp1_predict_license_plate(request):
         "status": True,
         "errMsg": None,
         "image_url": get_image.image.url,
+        "license_data_urls": license_data_links_without_null if len(license_data_links_without_null) > 0 else None,
         "license_plate_company_data": license_plate_company_data, 
         "license_numbers_data": rdw_scrapped_response if len(rdw_scrapped_response) > 0 else None 
         })
@@ -187,6 +193,7 @@ def vngp1_predict_license_plate(request):
             "status": True,
             "errMsg": None,
             "image_url": get_image.image.url,
+            "license_data_urls": license_data_links_without_null if len(license_data_links_without_null) > 0 else None,
             "license_plate_company_data": {
             "status": False,
             "errMsg": "No company data found!",
@@ -206,3 +213,36 @@ def vngp1_predict_license_plate(request):
             }, 
             "license_numbers_data": rdw_scrapped_response if len(rdw_scrapped_response) > 0 else None
             })
+
+# get image file from s3
+@api_view(['POST'])
+def get_image(request):
+    image_url = request.data.get('image_url')
+    image_name = image_url.split('/', -1)[-1]
+    s3 = boto3.client('s3', aws_access_key_id=s3_config.config["ACCESS_KEY"] , aws_secret_access_key=s3_config.config["SECRET_KEY"])
+    bucket = s3_config.config["BUCKET"]
+    try:
+        s3.download_file(bucket,'media/'+str(image_name),image_name)
+        with open(image_name, "rb") as file:
+            encoded_image = base64.b64encode(file.read())
+        os.remove(image_name)
+        return Response({'image_base64_bytes': encoded_image})
+    except:
+        return Response({'status': False, 'errMsg': "File Not Found!"})
+    
+
+# get license data file from s3
+@api_view(['POST'])
+def get_license_data(request):
+    license_url = request.data.get('license_url')
+    license_data_name = license_url.split('/', -1)[-1]
+    s3 = boto3.client('s3', aws_access_key_id=s3_config.config["ACCESS_KEY"] , aws_secret_access_key=s3_config.config["SECRET_KEY"])
+    bucket = s3_config.config["BUCKET"]
+    try:
+        s3.download_file(bucket,'license_data/'+str(license_data_name),license_data_name)
+        with open(license_data_name, "rb") as file:
+            encoded_file = base64.b64encode(file.read())
+        os.remove(license_data_name)
+        return Response({'license_data_name': encoded_file})
+    except:
+        return Response({'status': False, 'errMsg': "File Not Found!"})

@@ -6,6 +6,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from base.models import LicenseDatabaseS3Link
+import json, os, uuid
+from django.core.files import File
 
 def rdw_scrapper(license):
     options = Options()
@@ -1087,11 +1090,25 @@ def rdw_scrapper(license):
                 }
             ]
         }
-        return (response_data)
+        # creating json file to upload to s3
+        json_object = json.dumps(response_data, indent=4) #serializing
+        with open('data.json', 'w') as outfile:
+            outfile.write(json_object)
+        # store rdw data into database and s3
+        filename = str(license) + ".json"
+        license_database = LicenseDatabaseS3Link()
+        license_database.license_number = license
+        license_database.license_data_json = File(file=open("data.json", 'rb'), name=filename)
+        license_database.save()
+        get_link = LicenseDatabaseS3Link.objects.last()
+        url = get_link.license_data_json.url
+        os.remove('data.json')
+        return (response_data, url)
     except TimeoutException:
         driver.close()
-        return ({
+        response_data = {
             "status": False,
             "title": license,
             "errMsg": "ASD is geen geldig kenteken. Voer een geldig kenteken in en klik op de knop 'Zoeken'."
-            })
+        }
+        return (response_data, None)
