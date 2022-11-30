@@ -71,7 +71,6 @@ class license_company_recognition_pipeline():
                         img = cv2.resize(img, None, fx=10, fy=10, interpolation=cv2.INTER_CUBIC)
                         # (thresh, img) = cv2.threshold(img, 85, 255, cv2.THRESH_BINARY)
                         cv2.imwrite(image_path, img)
-                        globals()['license_number'] = "" 
                         license_numberr = ''
                         result = (self.model_dict["ocr_model"]).ocr(image_path, cls=True)
                         # print(result)
@@ -91,7 +90,7 @@ class license_company_recognition_pipeline():
                             print('No license number is detected')
                     else:
                        print('No license number is detected')
-                    globals()['license_number'] = license_numberr
+                    self.license_number = license_numberr
         blurred_image_path = 'blurred_image.png'
         image.save(blurred_image_path)
         return plates, blurred_image_path
@@ -110,7 +109,7 @@ class license_company_recognition_pipeline():
             for line in result:
                 print(line)
                 text = text +" " + line[1][0]
-            text = text.replace(globals()['license_number'], '')
+            text = text.replace(self.license_number, '')
             print("[+] TEXT: {}".format(text))
             return text
         else:
