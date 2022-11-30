@@ -10,10 +10,8 @@ def image_coordinates(image_path):
     if img.has_exif:
         try:
             img.gps_longitude
-            coords = (decimal_coords(img.gps_latitude,
-                      img.gps_latitude_ref),
-                      decimal_coords(img.gps_longitude,
-                      img.gps_longitude_ref))
+            coords = (decimal_coords(img.gps_latitude, img.gps_latitude_ref),
+                      decimal_coords(img.gps_longitude, img.gps_longitude_ref))
             return (coords)
         except AttributeError:
             return ('No Coordinates')

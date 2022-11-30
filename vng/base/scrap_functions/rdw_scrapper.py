@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from base.models import LicenseDatabaseS3Link
-import json, os, uuid
+import json, os
 from django.core.files import File
 
 def rdw_scrapper(license):

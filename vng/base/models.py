@@ -31,13 +31,18 @@ class TargetImage(models.Model):
     image = models.FileField(upload_to='media/')
     image_name = models.CharField(max_length=255, null=True)
     company = models.OneToOneField(Company, on_delete=models.CASCADE)
+    createdAt = models.TimeField(auto_now_add=True)
+    geom = models.PointField(srid=4326, spatial_index=True, null=True)
     def __str__(self):
         return self.image_name
 
 class LicensePlate(models.Model):
+    license_plate_id = models.CharField(max_length=500, primary_key=True)
     company = models.ForeignKey(to=Company, on_delete=models.CASCADE)
     target_image = models.ForeignKey(to=TargetImage, on_delete=models.CASCADE)
     license_number = models.CharField(max_length=100, null=True)
+    createdAt = models.TimeField(auto_now_add=True)
+    geom = models.PointField(srid=4326, spatial_index=True, null=True)
     def __str__(self):
         return self.license_number
 
@@ -45,4 +50,4 @@ class LicenseDatabaseS3Link(models.Model):
     license_number = models.CharField(max_length=100, null=True)
     license_data_json = models.FileField(upload_to='license_data/')
     def __str__(self):
-        return self.license_plate
+        return self.license_number

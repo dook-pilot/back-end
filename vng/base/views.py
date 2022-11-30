@@ -112,8 +112,9 @@ def vngp1_predict_license_plate(request):
         company.longitude = lng
         
         try:
-            pnt = Point(float(lat), float(lng))
-            company.geom = pnt
+            pnt_company = Point(lat, lng)
+            print(pnt_company)
+            company.geom = pnt_company
         except ValueError:
             return Response({
                 "status": False,
@@ -125,6 +126,14 @@ def vngp1_predict_license_plate(request):
         targetImage.image_id = image_id
         targetImage.image = File(file=open("image.jpg", 'rb'), name=image_name)
         targetImage.image_name = image_name
+        try:
+            pnt_image = Point(lat, lng)
+            targetImage.geom = pnt_image
+        except ValueError:
+            return Response({
+                "status": False,
+                "errMsg": "No GPS Data Found! Please Upload Another Image."
+            })
         targetImage.save()
         get_image = TargetImage.objects.get(image_id=image_id)
         updateCompanyImageUrl = Company.objects.get(company_id=id)
@@ -132,8 +141,18 @@ def vngp1_predict_license_plate(request):
         updateCompanyImageUrl.save()
         if license_plate_company_data['license_number'] != "":
             for license_number in license_plate_company_data['license_number']:
+                license_id = uuid.uuid4()
                 licensePlate = LicensePlate(company=company, target_image=targetImage)
                 licensePlate.license_number = license_number
+                licensePlate.license_plate_id = license_id
+                try:
+                    pnt_license = Point(lat, lng)
+                    licensePlate.geom = pnt_license
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "errMsg": "No GPS Data Found! Please Upload Another Image."
+                    })
                 licensePlate.save()
         os.remove("image.jpg")
         return Response({

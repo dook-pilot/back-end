@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import Company, LicensePlate, TargetImage, LicenseDatabaseS3Link
 
 class LicensePlateAdmin(admin.ModelAdmin):
-    list_display=['id', 'license_number', 'company']
+    list_display=['license_plate_id', 'license_number', 'company']
     readonly_fields=('company', 'target_image',)
 
 class TargetImageAdmin(admin.ModelAdmin):
