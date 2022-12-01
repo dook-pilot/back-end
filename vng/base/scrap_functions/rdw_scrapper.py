@@ -14,6 +14,7 @@ def rdw_scrapper(license):
     options = Options()
     options.headless = True
     options.add_argument("--window-size=1920,1200")
+    #driver =  webdriver.Chrome("/usr/bin/chromedriver", options=options)
     driver = webdriver.Chrome(options, service=Service(ChromeDriverManager().install()))
     driver.get('https://ovi.rdw.nl/default.aspx')
     search = driver.find_element(By.NAME, "ctl00$TopContent$txtKenteken").send_keys(license)

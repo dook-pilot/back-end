@@ -166,13 +166,15 @@ class license_company_recognition_pipeline():
                         for i in indices]
         # print(similarities)
         if len(similarities) == 0:
-            return {'res': 'No data found'}
+            return {'error': 'true'}
         else:
-            return (df[
+            response = df[
                 ['place_api_company_name', 'bovag_matched_name', 'poitive_reviews', 'negative_reviews', 'rating',
                  'duplicate_location', 'kvk_tradename',
                  'irregularities', 'duplicates_found', 'Bovag_registered', 'KVK_found',
-                 'company_ratings']].iloc[indices[np.argmax(similarities)]].to_dict())
+                 'company_ratings']].iloc[indices[np.argmax(similarities)]].to_dict()
+            response['error'] = 'false'
+            return (response)
     def run(self, image):
         models = self.load_models()  # load models
         plates, blurred_image_path = self.detectLicensePlate(image)
