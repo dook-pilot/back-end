@@ -18,7 +18,7 @@ class Company(models.Model):
     bovag_matched_name = models.CharField(max_length=255, null=True)
     poitive_reviews = models.IntegerField(null=True)
     negative_reviews = models.IntegerField(null=True)
-    rating = models.FloatField(null=True)
+    rating = models.CharField(max_length=255, null=True)
     duplicate_location = models.CharField(max_length=50, null=True)
     kvk_tradename = models.TextField(null=True)
     irregularities = models.CharField(max_length=50, null=True)
