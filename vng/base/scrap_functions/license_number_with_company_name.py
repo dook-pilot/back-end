@@ -22,37 +22,29 @@ class license_company_recognition_pipeline():
         self.detection_model_path = detection_model_path
         self.feature_extractor_model_path = feature_extractor_model_path
         self.csv_file_path = csv_file_path
-
     def load_models(self):
         model_dict = dict()
         # OCR Model
         if self.ocr_model_path == 'pretrained':
             model_dict['ocr_model'] = PaddleOCR(use_angle_cls=True, lang='en',
                                                 ocr_version='PP-OCRv3')  # need to run only once to download and load model into memory
-
             # detection model
         if self.detection_model_path:
             model_dict['detection_model'] = YolosForObjectDetection.from_pretrained(
                 'nickmuchi/yolos-small-rego-plates-detection')
-
             # feature extraction model
         if self.feature_extractor_model_path:
             model_dict['feature_extractor'] = YolosFeatureExtractor.from_pretrained(
                 'nickmuchi/yolos-small-rego-plates-detection')
-
             # Translator model
         model_dict["translator"] = GoogleTranslator(source='auto', target='en')
-
         self.model_dict = model_dict
         return model_dict  # dictionary of loaded model
-
     def detectLicensePlate(self, image):
         image = image
         flag = False
-
         inputs = self.model_dict["feature_extractor"](images=image, return_tensors="pt")
         outputs = self.model_dict["detection_model"](**inputs)
-
         # model predicts bounding boxes and corresponding face mask detection classes
         logits = outputs.logits
         bboxes = outputs.pred_boxes
@@ -62,7 +54,7 @@ class license_company_recognition_pipeline():
         for score, label, box in zip(results["scores"], results["labels"], results["boxes"]):
             box = [round(i, 2) for i in box.tolist()]
             # let's only keep detections with score > 0.9
-            if score > 0.8:
+            if score > 0.7:
                 if self.model_dict["detection_model"].config.id2label[label.item()] == 'license-plates':
                     # print(
                     # f"Detected {self.model_dict["detection_model"].config.id2label[label.item()]} with confidence "
@@ -71,42 +63,58 @@ class license_company_recognition_pipeline():
                     bbox = box  # (center_x, center_y, width, height)
                     if flag == True:
                         r_box = [int(round(item, 0)) for item in bbox]
-
                         offset = 10
                         im1 = image.crop((bbox[0] - offset, bbox[1] - offset, bbox[2] + offset, bbox[3] + offset))
                         image_path = 'detected.jpg'
                         im1.save(image_path)
                         img = cv2.imread(image_path, 1)
-                        img = cv2.resize(img, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+                        img = cv2.resize(img, None, fx=10, fy=10, interpolation=cv2.INTER_CUBIC)
+                        # (thresh, img) = cv2.threshold(img, 85, 255, cv2.THRESH_BINARY)
                         cv2.imwrite(image_path, img)
-                        license_number = ''
+                        license_numberr = ''
                         result = (self.model_dict["ocr_model"]).ocr(image_path, cls=True)
+                        # print(result)
                         ic = image.crop(r_box)
-                        for i in range(10):  # with the BLUR filter, you can blur a few times to get the effect you're seeking
+                        for i in range(30):  # with the BLUR filter, you can blur a few times to get the effect you're seeking
                             ic = ic.filter(ImageFilter.BLUR)
                         image.paste(ic, r_box)
-                        for line in result:
-                            license_number = license_number + " " + line[1][0]
-                        plates.append(license_number.strip())
-                        #print(f"Vehicle Licence Number:  {license_number}\n\n")
-                    #else:
-                       # print('No license number is detected')
+                        license_numberr = str(result[0][1][0])
+                        # for line in result:
+                            # if len(line)>0:
+                            #     print(line)
+                            #     license_number = license_number + " " + str(line[1][0])
+                        if license_numberr!= '':
+                            plates.append(license_numberr.strip())
+                            print(f"Vehicle Licence Number:  {license_numberr}\n\n")
+                        else:
+                            print('No license number is detected')
+                    else:
+                       print('No license number is detected')
+                    self.license_number = license_numberr
         blurred_image_path = 'blurred_image.png'
         image.save(blurred_image_path)
-
         return plates, blurred_image_path
-
     def recognizeCompanyName(self, blurred_image_path):
         img = cv2.imread(blurred_image_path, 1)
-        img = cv2.resize(img, None, fx=10, fy=10, interpolation=cv2.INTER_CUBIC)
+        img = cv2.resize(img, None, fx=5, fy=5, interpolation=cv2.INTER_CUBIC)
         cv2.imwrite(blurred_image_path, img)
         text = ''
         result = self.model_dict["ocr_model"].ocr(blurred_image_path, cls=True)
-        for line in result:
-            text = text + " " + line[1][0]
-
-        return text
-
+        
+        if len(result) != 0:
+            print("OCR Result: {}".format(result[0]))
+            # for line in result[0]:
+            #     print(line)
+            #     text = text + " " + str(line[0])
+            for line in result:
+                print(line)
+                text = text +" " + line[1][0]
+            text = text.replace(self.license_number, '')
+            print("[+] TEXT: {}".format(text))
+            return text
+        else:
+            print("No text data found!")
+            return ""
     def finding_stopwords(self, df):
         word_counts = {}
         for name in df['place_api_company_name'].tolist():
@@ -115,7 +123,6 @@ class license_company_recognition_pipeline():
                     word_counts[word] += 1
                 else:
                     word_counts[word] = 1
-
         word_counts = {k.lower(): v for k, v in word_counts.items() if v > 5}
         stop_words = list(word_counts.keys())
         rms = ['kia', 'louwman', 'leiden', 'rotterdam', 'katwijk', 'noordwijk', 'leiderdorp', 'davo', 'zoetermeer']
@@ -133,9 +140,7 @@ class license_company_recognition_pipeline():
                 'body', 'tire', 'service', 'road', 'loan', 'service', 'leveling', 'systems']
         for w in adds:
             stop_words.append(w)
-
         return stop_words
-
     def stopwords_removal(self, text, stop_words):
         query = ''
         text = text.lower()
@@ -144,7 +149,6 @@ class license_company_recognition_pipeline():
             if word.lower() not in stop_words and len(word) > 3 and len(word) < 15:
                 query = query + word.lower() + ' '
         return query
-
     def retrieving_final_results(self, detected_text):
         #print(self.csv_file_path)
         df = pd.read_csv(self.csv_file_path)
@@ -157,28 +161,27 @@ class license_company_recognition_pipeline():
             for i, name in enumerate(name_lowers):
                 if token in name:
                     indices.append(i)
-
         # print(indices)
-
         similarities = [SequenceMatcher(a=self.stopwords_removal(detected_text, stop_words), b=name_lowers[i]).ratio()
                         for i in indices]
         # print(similarities)
         if len(similarities) == 0:
-            return {'res': 'No data found'}
+            return {'error': 'true'}
         else:
-            return (df[
+            response = df[
                 ['place_api_company_name', 'bovag_matched_name', 'poitive_reviews', 'negative_reviews', 'rating',
                  'duplicate_location', 'kvk_tradename',
                  'irregularities', 'duplicates_found', 'Bovag_registered', 'KVK_found',
-                 'company_ratings']].iloc[indices[np.argmax(similarities)]].to_dict())
-
+                 'company_ratings']].iloc[indices[np.argmax(similarities)]].to_dict()
+            response['error'] = 'false'
+            return (response)
     def run(self, image):
         models = self.load_models()  # load models
         plates, blurred_image_path = self.detectLicensePlate(image)
         text = self.recognizeCompanyName(blurred_image_path)
         results = self.retrieving_final_results(text)
+        # print(text)
         return results, plates
-
 data_directory = f'{os.getcwd()}/base/10-08-22'
 companies_details_csv = f'{data_directory}/674_records_final_result_merged_with_updated_bovag_merged_reviews_and_irregularities.csv'#place_api_car_companies_indicators.csv'
 pipeline = license_company_recognition_pipeline(ocr_model_path='pretrained',
@@ -186,30 +189,35 @@ pipeline = license_company_recognition_pipeline(ocr_model_path='pretrained',
                                                 feature_extractor_model_path='nickmuchi/yolos-small-rego-plates-detection' ,
                                                 csv_file_path = companies_details_csv)
 models = pipeline.load_models() # load models
-
-def get_image_upload_license_company_res(image):
+def get_image_upload_license_company_res(imagee):
     #print('inside function license plate recognition')
-    image = Image.open(io.BytesIO(image)).convert('RGB')
+    image = Image.open(io.BytesIO(imagee)).convert('RGB')
+    # image = Image.open(imagee).convert('RGB')
     width, height = image.size
     print(image.size)
+    raw_image_path = 'raw_image.jpg'
     if width >= 3000 or height >= 3000:
-        width = int(width/1.5)
-        height = int(height/1.5)
-        newsize = (width, height)
-        im1 = image.resize(newsize)
+        # image = image.rotate(270, expand=True)
+        image.save(raw_image_path)
+        img=cv2.imread(raw_image_path)
+        img = cv2.resize(img, None, fx = 0.50, fy = 0.50)
+        cv2.imwrite(raw_image_path,img)
+        im1 = Image.open(raw_image_path).rotate(270, expand=True).convert('RGB')
+        # width = int(width/1.5)
+        # height = int(height/1.5)
+        # newsize = (width, height)
+        # im1 = image.resize(newsize)
         print(im1.size)
-        #im1.show()
+        # plt.imshow(im1)
+        # plt.show() 
         df_dict, plates = pipeline.run(im1)
+        # pipeline.run(im1)
         df_dict['license_number'] = plates
+        print(df_dict['license_number'])
         return df_dict
     else:
+        # pipeline.run(image)
         df_dict, plates = pipeline.run(image)
         df_dict['license_number'] = plates
+        print(df_dict['license_number'])
         return df_dict
-
-# image = Image.open('test_img5.jpg').convert('RGB')
-# df_dict = get_image_upload_res(image)
-# # df_dict, plates = pipeline.run(image)
-# # df_dict['license_number'] = plates
-# # print('License plate info: ', plates)
-# print('Data: ', df_dict)
