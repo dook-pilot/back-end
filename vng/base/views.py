@@ -5,10 +5,9 @@ import os
 import boto3
 import base64
 from . import write_uploaded_image
-from .models import TargetImage, User
+from .models import TargetImage, User, History
 from .data import get_image_public_url, read_metadata, fetch_image_detail, fetch_license_detail, get_image_url
 from .store_data import history_database, user_database, image_database, company_database, license_plate_database
-from .response_format import invalid_gps, found_company_license, no_company_found
 # Create your views here.
 
 @api_view(['POST'])
@@ -41,3 +40,21 @@ def upload_data(request):
     )
     os.remove(image_name)
     return Response({"status": True, "message": "Successfully uploaded"})
+
+@api_view(['GET'])
+def getHistory(request, user_id):
+    history_instance = History.objects.filter(user__uid=user_id).values()
+    response = [{'status': True, 'documents': []}]
+    for value in history_instance:
+        datetime = str(value['date']) + " at " + str(value['time'])
+        response[0]['documents'].append({
+            'id': value['image_id'],
+            'title': value['title'],
+            'image': value['image_url'],
+            'datetime': datetime,
+            'time': value['time'],
+            'latitude': value['latitude'],
+            'longitude': value['longitude'],
+            'isProcessed': value['isProcessed'],
+        },)
+    return Response(response)
