@@ -23,7 +23,7 @@ def getHistory(request, user_id):
             'longitude': value['longitude'],
             'isProcessed': value['isProcessed'],
         },)
-    return Response(response)
+    return Response(response[0])
 
 @api_view(['POST'])
 def upload(request):
