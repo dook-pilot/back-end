@@ -1,10 +1,12 @@
-from base.models import History
+from base.models import History, User, TargetImage
 from uuid import uuid4
 
 
-def store_history(user_instance, image_instance, title, image_url, lng, lat):
+def store_history(uid, img_id, title, image_url, lng, lat):
     history_id = uuid4()
-    history_instance = History(user=user_instance, image=image_instance)
+    user = User.objects.get(uid=uid)
+    image = TargetImage(image_id=img_id)
+    history_instance = History(user=user, image=image)
     history_instance.hid = history_id
     history_instance.title = title
     history_instance.image_url = image_url
