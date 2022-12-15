@@ -22,6 +22,7 @@ class license_company_recognition_pipeline():
         self.detection_model_path = detection_model_path
         self.feature_extractor_model_path = feature_extractor_model_path
         self.csv_file_path = csv_file_path
+        self.license_number = ""
     def load_models(self):
         model_dict = dict()
         # OCR Model
@@ -220,4 +221,4 @@ def get_image_upload_license_company_res(imagee):
         df_dict, plates = pipeline.run(image)
         df_dict['license_number'] = plates
         print(df_dict['license_number'])
-        return df_dict
+        return 

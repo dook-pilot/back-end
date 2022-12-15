@@ -20,6 +20,7 @@ class TargetImage(models.Model):
     date = models.DateField(default=timezone.now, null=True)
     time = models.TimeField(auto_now_add=True, null=True)
     geom = models.PointField(srid=4326, spatial_index=True, null=True)
+    isScraped = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
@@ -55,9 +56,8 @@ class Company(models.Model):
 
 
 class LicensePlate(models.Model):
-    license_plate_id = models.CharField(max_length=500, primary_key=True)
     target_image = models.ForeignKey(to=TargetImage, on_delete=models.CASCADE)
-    license_number = models.CharField(max_length=100, null=True)
+    license_number = models.CharField(max_length=100, primary_key=True)
     date = models.DateField(default=timezone.now, null=True)
     time = models.TimeField(auto_now_add=True, null=True)
     geom = models.PointField(srid=4326, spatial_index=True, null=True)
@@ -67,7 +67,7 @@ class LicensePlate(models.Model):
 
 
 class LicenseDatabaseS3Link(models.Model):
-    license_number = models.CharField(max_length=100, null=True)
+    license_number = models.CharField(max_length=100, primary_key=True)
     license_data_json = models.FileField(upload_to='license_data/')
 
     def __str__(self):

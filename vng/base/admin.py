@@ -3,7 +3,7 @@ from .models import Company, LicensePlate, User, TargetImage, LicenseDatabaseS3L
 
 
 class LicensePlateAdmin(admin.ModelAdmin):
-    list_display = ['license_plate_id', 'license_number']
+    list_display = ['license_number']
     readonly_fields = ('target_image',)
 
 
@@ -18,7 +18,7 @@ class HistoryAdmin(admin.ModelAdmin):
 
 
 class LicenseDatabaseS3LinkAdmin(admin.ModelAdmin):
-    list_display = ['id', 'license_number']
+    list_display = ['license_number']
 
 
 class CompanyAdmin(admin.ModelAdmin):

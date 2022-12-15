@@ -1104,7 +1104,7 @@ def rdw_scrapper(license):
         get_link = LicenseDatabaseS3Link.objects.last()
         url = get_link.license_data_json.url
         os.remove('data.json')
-        return (response_data, url)
+        return (filename)
     except TimeoutException:
         driver.close()
         response_data = {
