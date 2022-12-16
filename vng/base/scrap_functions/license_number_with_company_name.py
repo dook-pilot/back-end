@@ -215,10 +215,14 @@ def get_image_upload_license_company_res(imagee):
         # pipeline.run(im1)
         df_dict['license_number'] = plates
         print(df_dict['license_number'])
+        # df_dict["status"] = True
+        # df_dict["errMsg"] = None
         return df_dict
     else:
         # pipeline.run(image)
         df_dict, plates = pipeline.run(image)
         df_dict['license_number'] = plates
         print(df_dict['license_number'])
-        return 
+        # df_dict["status"] = True
+        # df_dict["errMsg"] = None
+        return df_dict

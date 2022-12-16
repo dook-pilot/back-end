@@ -35,7 +35,7 @@ def job():
                     license = license_plate_database.store_license_plate(
                         license_number, image, lng, lat)
                     # SCRAP RDW DATA ON EACH LICENSE NUMBER
-                    json_filename = rdw_scrapper.rdw_scrapper(license_number)
+                    rdw_response = rdw_scrapper.rdw_scrapper(license_number)
                     
             history.isProcessed = True
             image.isScraped = True
@@ -45,5 +45,5 @@ def job():
             
 def start():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(job, 'interval', minutes=1, id="0", replace_existing=True)
+    scheduler.add_job(job, 'interval', seconds=2, id="0", replace_existing=True)
     scheduler.start()
