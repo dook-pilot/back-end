@@ -97,7 +97,7 @@ def getData(request, id):
     # GET COMPANY DATA
     if company is not None:
         company_data = {
-            "status": False,
+            "status": True,
             "errMsg": None,
             "place_api_company_name": company.place_api_company_name,
             "bovag_matched_name": company.bovag_matched_name,
