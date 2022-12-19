@@ -20,6 +20,7 @@ class TargetImage(models.Model):
     date = models.DateField(default=timezone.now, null=True)
     time = models.TimeField(auto_now_add=True, null=True)
     geom = models.PointField(srid=4326, spatial_index=True, null=True)
+    datetime = models.DateTimeField(auto_now_add=True, null=True)
     isScraped = models.BooleanField(default=False)
 
     def __str__(self):
@@ -46,6 +47,7 @@ class Company(models.Model):
     geom = models.PointField(srid=4326, spatial_index=True, null=True)
     image_url = models.CharField(max_length=500, null=True)
     date = models.DateField(default=timezone.now, null=True)
+    datetime = models.DateTimeField(auto_now_add=True, null=True)
     time = models.TimeField(auto_now_add=True, null=True)
 
     def __str__(self):
@@ -60,6 +62,7 @@ class LicensePlate(models.Model):
     license_number = models.CharField(max_length=100, primary_key=True)
     date = models.DateField(default=timezone.now, null=True)
     time = models.TimeField(auto_now_add=True, null=True)
+    datetime = models.DateTimeField(auto_now_add=True, null=True)
     geom = models.PointField(srid=4326, spatial_index=True, null=True)
 
     def __str__(self):
@@ -85,6 +88,7 @@ class History(models.Model):
     latitude = models.CharField(max_length=255, null=True)
     longitude = models.CharField(max_length=255, null=True)
     isProcessed = models.BooleanField(default=False)
+    datetime = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         return str(self.title)

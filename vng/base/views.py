@@ -11,7 +11,7 @@ from .response_format import no_company_found, found_company_license
 
 @api_view(['GET'])
 def getHistory(request, user_id):
-    history_instance = History.objects.filter(user__uid=user_id).values().order_by('-time')
+    history_instance = History.objects.filter(user__uid=user_id).values().order_by('-datetime')
     response = [{'status': True, 'documents': []}]
     for value in history_instance:
         history = History.objects.get(hid=value['hid'])
@@ -22,7 +22,7 @@ def getHistory(request, user_id):
             'id': value['image_id'],
             'title': value['title'],
             'image': image_url,
-            'datetime': datetime,
+            'new_datetime': value['datetime'],
             'latitude': value['latitude'],
             'longitude': value['longitude'],
             'isProcessed': value['isProcessed'],
@@ -74,7 +74,7 @@ def getData(request, id):
     except:
         company = None
     try:
-        license_numbers = LicensePlate.objects.filter(target_image=image).order_by('-time')
+        license_numbers = LicensePlate.objects.filter(target_image=image).order_by('-datetime')
     except:
         license_numbers = []
     # GET LICENSE NUMBERS
