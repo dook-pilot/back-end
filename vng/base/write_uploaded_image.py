@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+
 def get_image(file):
     image_name = str(uuid4())+".jpg"
     image_bytes = file.read()

@@ -22,6 +22,7 @@ class license_company_recognition_pipeline():
         self.detection_model_path = detection_model_path
         self.feature_extractor_model_path = feature_extractor_model_path
         self.csv_file_path = csv_file_path
+        self.license_number = ""
     def load_models(self):
         model_dict = dict()
         # OCR Model
@@ -78,7 +79,12 @@ class license_company_recognition_pipeline():
                         for i in range(30):  # with the BLUR filter, you can blur a few times to get the effect you're seeking
                             ic = ic.filter(ImageFilter.BLUR)
                         image.paste(ic, r_box)
-                        license_numberr = str(result[0][1][0])
+                        print(result)
+                        # license_numberr = str(result[0][1][0])
+                        if result == []:
+                            license_numberr = ""
+                        else:
+                            license_numberr = str(result[0][1][0])
                         # for line in result:
                             # if len(line)>0:
                             #     print(line)
@@ -88,6 +94,7 @@ class license_company_recognition_pipeline():
                             print(f"Vehicle Licence Number:  {license_numberr}\n\n")
                         else:
                             print('No license number is detected')
+                        
                     else:
                        print('No license number is detected')
                     self.license_number = license_numberr
@@ -214,10 +221,14 @@ def get_image_upload_license_company_res(imagee):
         # pipeline.run(im1)
         df_dict['license_number'] = plates
         print(df_dict['license_number'])
+        # df_dict["status"] = True
+        # df_dict["errMsg"] = None
         return df_dict
     else:
         # pipeline.run(image)
         df_dict, plates = pipeline.run(image)
         df_dict['license_number'] = plates
         print(df_dict['license_number'])
+        # df_dict["status"] = True
+        # df_dict["errMsg"] = None
         return df_dict
