@@ -23,7 +23,6 @@ def getHistory(request, user_id):
             'title': value['title'],
             'image': image_url,
             'datetime': datetime,
-            'time': value['time'],
             'latitude': value['latitude'],
             'longitude': value['longitude'],
             'isProcessed': value['isProcessed'],
@@ -85,6 +84,8 @@ def getData(request, id):
         for license_number in license_numbers:
             license_nums.append(license_number.license_number)
             json_filename = license_number.license_number+".json"
+            if " " in json_filename:
+                json_filename = json_filename.replace(" ", "_")
             # DOWNLOAD RDW JSON FILE
             download_rdw_s3.downloadRdwJson(json_filename)
             # STORE RDW RESPONSE
@@ -96,6 +97,8 @@ def getData(request, id):
     # GET COMPANY DATA
     if company is not None:
         company_data = {
+            "status": False,
+            "errMsg": None,
             "place_api_company_name": company.place_api_company_name,
             "bovag_matched_name": company.bovag_matched_name,
             "poitive_reviews": company.poitive_reviews,
