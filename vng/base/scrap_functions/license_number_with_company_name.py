@@ -79,7 +79,12 @@ class license_company_recognition_pipeline():
                         for i in range(30):  # with the BLUR filter, you can blur a few times to get the effect you're seeking
                             ic = ic.filter(ImageFilter.BLUR)
                         image.paste(ic, r_box)
-                        license_numberr = str(result[0][1][0])
+                        print(result)
+                        # license_numberr = str(result[0][1][0])
+                        if result == []:
+                            license_numberr = ""
+                        else:
+                            license_numberr = str(result[0][1][0])
                         # for line in result:
                             # if len(line)>0:
                             #     print(line)
@@ -89,6 +94,7 @@ class license_company_recognition_pipeline():
                             print(f"Vehicle Licence Number:  {license_numberr}\n\n")
                         else:
                             print('No license number is detected')
+                        
                     else:
                        print('No license number is detected')
                     self.license_number = license_numberr

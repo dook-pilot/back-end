@@ -18,7 +18,7 @@ def getHistory(request, user_id):
         image_url = get_image_public_url.get_img_url(value['image_id'])
         history.image_url = image_url
         datetime = str(history.datetime)
-        datetime = datetime.replace("T", " ")
+        datetime = datetime.replace("T", " at ")
         dot_pos = datetime.index('.')
         response[0]['documents'].append({
             'id': value['image_id'],
