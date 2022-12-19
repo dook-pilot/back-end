@@ -18,13 +18,17 @@ def getHistory(request, user_id):
         image_url = get_image_public_url.get_img_url(value['image_id'])
         history.image_url = image_url
         datetime = str(history.datetime)
-        datetime = datetime.replace("T", " at ")
-        dot_pos = datetime.index('.')
+        datetime = datetime.replace("T", " ")
+        space_pos = datetime.index(' ')
+        date = datetime[:space_pos]
+        time = datetime[space_pos:]
+        dot_pos = time.index('.')
+        print(datetime)
         response[0]['documents'].append({
             'id': value['image_id'],
             'title': value['title'],
             'image': image_url,
-            'datetime': datetime[:dot_pos],
+            'datetime': date + " at " + time[:dot_pos],
             'latitude': value['latitude'],
             'longitude': value['longitude'],
             'isProcessed': value['isProcessed'],
