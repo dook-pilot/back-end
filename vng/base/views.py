@@ -22,7 +22,7 @@ def getHistory(request, user_id):
             'id': value['image_id'],
             'title': value['title'],
             'image': image_url,
-            'new_datetime': value['datetime'],
+            'datetime': value['datetime'],
             'latitude': value['latitude'],
             'longitude': value['longitude'],
             'isProcessed': value['isProcessed'],
