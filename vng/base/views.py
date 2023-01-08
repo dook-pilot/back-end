@@ -22,12 +22,17 @@ def getHistory(request, user_id):
         space_pos = datetime.index(' ')
         date = datetime[:space_pos]
         time = datetime[space_pos:]
+        first_colon_pos = time.index(':')
+        hour = time[:first_colon_pos]
+        hour = int(hour) + 1
+        print(hour)
         dot_pos = time.index('.')
         print(datetime)
         response[0]['documents'].append({
             'id': value['image_id'],
             'title': value['title'],
             'image': image_url,
+            'datetime_new': value['datetime_new'],
             # 'datetime': date + " at" + time[:dot_pos],
             'datetime': datetime,
             'latitude': value['latitude'],
@@ -124,5 +129,3 @@ def getData(request, id):
     else:
         company_data = {"license_number": license_nums}
         return Response(no_company_found.response(company_data, rdw_response))
-    
-    return Response("DONE")

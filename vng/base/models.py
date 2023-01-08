@@ -1,9 +1,15 @@
 from django.db import models
 from django.contrib.gis.db import models
 from django.utils import timezone
+import pytz
+import datetime
+
 # Create your models here.
 
-
+tz = pytz.timezone('Europe/Amsterdam')
+tz = datetime.datetime.now(tz=tz)
+print("time....")
+print(tz)
 class User(models.Model):
     uid = models.CharField(max_length=500, primary_key=True)
 
@@ -21,6 +27,7 @@ class TargetImage(models.Model):
     time = models.TimeField(auto_now_add=True, null=True)
     geom = models.PointField(srid=4326, spatial_index=True, null=True)
     datetime = models.DateTimeField(auto_now_add=True, null=True)
+    datetime_new = models.DateTimeField(default=tz, null=True)
     isScraped = models.BooleanField(default=False)
 
     def __str__(self):
@@ -46,6 +53,7 @@ class Company(models.Model):
     longitude = models.CharField(max_length=255, null=True)
     geom = models.PointField(srid=4326, spatial_index=True, null=True)
     image_url = models.CharField(max_length=500, null=True)
+    datetime_new = models.DateTimeField(default=tz, null=True)
     date = models.DateField(default=timezone.now, null=True)
     datetime = models.DateTimeField(auto_now_add=True, null=True)
     time = models.TimeField(auto_now_add=True, null=True)
@@ -62,6 +70,7 @@ class LicensePlate(models.Model):
     license_number = models.CharField(max_length=100, primary_key=True)
     date = models.DateField(default=timezone.now, null=True)
     time = models.TimeField(auto_now_add=True, null=True)
+    datetime_new = models.DateTimeField(default=tz, null=True)
     datetime = models.DateTimeField(auto_now_add=True, null=True)
     geom = models.PointField(srid=4326, spatial_index=True, null=True)
 
@@ -88,6 +97,7 @@ class History(models.Model):
     latitude = models.CharField(max_length=255, null=True)
     longitude = models.CharField(max_length=255, null=True)
     isProcessed = models.BooleanField(default=False)
+    datetime_new = models.DateTimeField(default=tz, null=True)
     datetime = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
