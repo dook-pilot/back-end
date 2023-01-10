@@ -2,17 +2,18 @@ FROM python:3.10.8
 
 ENV PYTHONUNBUFFERED 1
 
+RUN adduser docker
+USER docker
 
 WORKDIR /usr/src/app
+
 RUN apt-get update &&\
     apt-get install -y binutils libproj-dev gdal-bin
 RUN pip install --upgrade pip
-USER docker
 RUN pip install uwsgi
 RUN pip install paddleocr --upgrade
 RUN pip install paddlepaddle
 RUN pip install common dual tight data prox
-
 
 COPY requirements.txt requirements.txt
 
