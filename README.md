@@ -44,6 +44,7 @@ VNG/
 ├─ manage.py
 ```
 
+
 vng/ is the root directory of project. Inside root directory there are project directory (vng/) and application directory (base/).
 The project directory vng/ contains configurations of our project.
 The base/ directory contains all of the scraping logics and functions. Inside base/ directory there is a folder called scrap_functions/ which contains two files.
