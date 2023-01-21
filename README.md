@@ -10,6 +10,7 @@ A django project to scrap information from websites and images. Built with djang
 4. python setup.py install
    run the project by: python manage.py runserver
 
+
 # Installation
 
 First create a python environement.
@@ -18,6 +19,7 @@ pip install -r requirements.txt
 All libraries can be installed by pip.
 
 # Directory Structure
+
 
 ```
 VNG/
