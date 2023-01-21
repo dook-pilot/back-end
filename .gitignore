@@ -6,6 +6,7 @@ blurred_image.png
 detected.jpg
 *.jpg
 *.png
+.env.*
 s3_config.py
 # Byte-compiled / optimized / DLL files
 __pycache__/
