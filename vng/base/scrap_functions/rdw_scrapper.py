@@ -1104,7 +1104,7 @@ def rdw_scrapper(license):
         get_link = LicenseDatabaseS3Link.objects.last()
         url = get_link.license_data_json.url
         os.remove('data.json')
-        return (response_data, url)
+        return (filename)
     except TimeoutException:
         driver.close()
         response_data = {
@@ -1112,4 +1112,17 @@ def rdw_scrapper(license):
             "title": license,
             "errMsg": "ASD is geen geldig kenteken. Voer een geldig kenteken in en klik op de knop 'Zoeken'."
         }
-        return (response_data, None)
+        # creating json file to upload to s3
+        json_object = json.dumps(response_data, indent=4) #serializing
+        with open('data.json', 'w') as outfile:
+            outfile.write(json_object)
+        # store rdw data into database and s3
+        filename = str(license) + ".json"
+        license_database = LicenseDatabaseS3Link()
+        license_database.license_number = license
+        license_database.license_data_json = File(file=open("data.json", 'rb'), name=filename)
+        license_database.save()
+        get_link = LicenseDatabaseS3Link.objects.last()
+        url = get_link.license_data_json.url
+        os.remove('data.json')
+        return (filename)

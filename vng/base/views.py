@@ -1,77 +1,131 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from . import s3_config
-import os, boto3, base64
+from django.shortcuts import get_object_or_404
+import os, json
 from . import write_uploaded_image
-from .models import TargetImage
-from .data import read_metadata, fetch_image_detail, fetch_license_detail, get_image_url
-from .store_data import image_database, company_database, license_plate_database
-from .response_format import invalid_gps, found_company_license, no_company_found
+from .models import TargetImage, User, History, Company, LicensePlate
+from .data import get_image_public_url, read_metadata, download_rdw_s3
+from .store_data import history_database, user_database, image_database
+from .response_format import no_company_found, found_company_license
 # Create your views here.
 
+@api_view(['GET'])
+def getHistory(request, user_id):
+    history_instance = History.objects.filter(user__uid=user_id).values().order_by('-datetime')
+    response = [{'status': True, 'documents': []}]
+    for value in history_instance:
+        history = History.objects.get(hid=value['hid'])
+        image_url = get_image_public_url.get_img_url(value['image_id'])
+        history.image_url = image_url
+        datetime = str(history.datetime)
+        datetime = datetime.replace("T", " ")
+        space_pos = datetime.index(' ')
+        date = datetime[:space_pos]
+        time = datetime[space_pos:]
+        first_colon_pos = time.index(':')
+        hour = time[:first_colon_pos]
+        hour = int(hour) + 1
+        print(hour)
+        dot_pos = time.index('.')
+        print(datetime)
+        response[0]['documents'].append({
+            'id': value['image_id'],
+            'title': value['title'],
+            'image': image_url,
+            'datetime_new': value['datetime_new'],
+            # 'datetime': date + " at" + time[:dot_pos],
+            'datetime': datetime,
+            'latitude': value['latitude'],
+            'longitude': value['longitude'],
+            'isProcessed': value['isProcessed'],
+        },)
+        history.save()
+    return Response(response[0])
+
 @api_view(['POST'])
-def vngp1_predict_license_plate(request):
+def upload(request):
     file = request.data.get('file')
-    print(file)
-    if file == None:
-        return Response({'error': "MemoryError: Please try with different image"})
+    user_id = request.data.get('user_id')
+    title = request.data.get('title') if request.data.get('title') is not "" else ""
+    if user_id == "":
+        return Response({'status': False, 'message': "No User ID"})
+    if file == None or file == "":
+        return Response({'status': False, 'message': "No File: Upload a file or try with different image."})
     # SAVING IMAGE INTO LOCAL SYSTEM
     image_name, image_bytes = write_uploaded_image.get_image(file)
     # GET LATITUDE AND LONGITUDE FROM IMAGE
     lng, lat = read_metadata.coordinates(image_name)
-    # GET IMAGE SCRAPED DATA
-    license_plate_company_data = fetch_image_detail.company_license_data(image_bytes)
+    # STORE USER ID IN DATABASE
+    uid = user_database.store_user(user_id)
     # STORE IMAGE IN DATABASE AND S3 BUCKET
-    image_instance_id = image_database.store_image(lng, lat, image_name)
-    if image_instance_id == TypeError:
-        return Response(invalid_gps.response())
-    # FOREIGN KEY TARGET IMAGE
-    foreign_key = TargetImage.objects.get(image_id=image_instance_id)
-    # STORE COMPANY DETAILS IN DATABASE
-    if license_plate_company_data['error'] == 'false':
-        company_instance_id = company_database.store_company(lng, lat, foreign_key, license_plate_company_data)
-    # STORE LICENSE NUMBERS IN DATABASE
-    if len(license_plate_company_data['license_number']) > 0:
-        for license_number in license_plate_company_data['license_number']:
-            license_instance_id = license_plate_database.store_license_plate(license_number, foreign_key, lng, lat)
+    img_id = image_database.store_image(
+        lng, lat, image_name, title, uid)
+    if(img_id == TypeError):
+        return Response({'status': False, "message": "No GPS Data Found!"})
+    # GET IMAGE URL
+    image_url = get_image_public_url.get_img_url(img_id)
+    # STORE HISTORY DATA
+    history_id = history_database.store_history(
+        uid, img_id, title, image_url, lng, lat
+    )
     os.remove(image_name)
-    # PREPARE RESPONSE
-    image_url = get_image_url.image_url(image_instance_id)
-    rdw_scraped_response, json_file_urls = fetch_license_detail.license_detail(license_plate_company_data)
-    if license_plate_company_data['error'] == 'false':
-        return Response(found_company_license.response(json_file_urls, license_plate_company_data, rdw_scraped_response, image_url))
-    else:
-        return Response(no_company_found.response(license_plate_company_data, json_file_urls, rdw_scraped_response, image_url))
-    
-# get image file from s3
-@api_view(['POST'])
-def get_image(request):
-    image_url = request.data.get('image_url')
-    image_name = image_url.split('/', -1)[-1]
-    s3 = boto3.client('s3', aws_access_key_id=s3_config.config["ACCESS_KEY"] , aws_secret_access_key=s3_config.config["SECRET_KEY"])
-    bucket = s3_config.config["BUCKET"]
-    try:
-        s3.download_file(bucket,'media/'+str(image_name),image_name)
-        with open(image_name, "rb") as file:
-            encoded_image = base64.b64encode(file.read())
-        os.remove(image_name)
-        return Response({'image_base64_bytes': encoded_image})
-    except:
-        return Response({'status': False, 'errMsg': "File Not Found!"})
-    
+    return Response({"status": True, "message": "Successfully uploaded"})
 
-# get license data file from s3
-@api_view(['POST'])
-def get_license_data(request):
-    license_url = request.data.get('license_url')
-    license_data_name = license_url.split('/', -1)[-1]
-    s3 = boto3.client('s3', aws_access_key_id=s3_config.config["ACCESS_KEY"] , aws_secret_access_key=s3_config.config["SECRET_KEY"])
-    bucket = s3_config.config["BUCKET"]
+@api_view(['GET'])
+def getData(request, id):
+    image = TargetImage.objects.get(image_id=id)
+    history = History.objects.get(image=image)
+    license_numbers = []
+    if history.isProcessed == False:
+        return Response({
+            'status': False,
+            'message': 'Data is processing, try again later.'
+        })
     try:
-        s3.download_file(bucket,'license_data/'+str(license_data_name),license_data_name)
-        with open(license_data_name, "rb") as file:
-            encoded_file = base64.b64encode(file.read())
-        os.remove(license_data_name)
-        return Response({'license_data_name': encoded_file})
+        company = Company.objects.get(target_image=image)
     except:
-        return Response({'status': False, 'errMsg': "File Not Found!"})
+        company = None
+    try:
+        license_numbers = LicensePlate.objects.filter(target_image=image).order_by('-datetime')
+    except:
+        license_numbers = []
+    # GET LICENSE NUMBERS
+    license_nums = []
+    rdw_response = []
+    if len(license_numbers) > 0:
+        for license_number in license_numbers:
+            license_nums.append(license_number.license_number)
+            json_filename = license_number.license_number+".json"
+            if " " in json_filename:
+                json_filename = json_filename.replace(" ", "_")
+            # DOWNLOAD RDW JSON FILE
+            download_rdw_s3.downloadRdwJson(json_filename)
+            # STORE RDW RESPONSE
+            j_file = open(json_filename)
+            rdw_data = json.load(j_file)
+            rdw_response.append(rdw_data)
+            j_file.close()
+            os.remove(json_filename)
+    # GET COMPANY DATA
+    if company is not None:
+        company_data = {
+            "status": True,
+            "errMsg": None,
+            "place_api_company_name": company.place_api_company_name,
+            "bovag_matched_name": company.bovag_matched_name,
+            "poitive_reviews": company.poitive_reviews,
+            "negative_reviews": company.negative_reviews, 
+            "rating": company.rating,
+            "duplicate_location": company.duplicate_location,
+            "kvk_tradename": company.kvk_tradename,
+            "irregularities": company.irregularities,
+            "duplicates_found": company.duplicates_found,
+            "Bovag_registered": company.Bovag_registered,
+            "KVK_found": company.KVK_found,
+            "company_ratings": company.company_ratings,
+            "license_number": license_nums if len(license_nums) > 0 else None
+            }
+        return Response(found_company_license.response(company_data, rdw_response))
+    else:
+        company_data = {"license_number": license_nums}
+        return Response(no_company_found.response(company_data, rdw_response))

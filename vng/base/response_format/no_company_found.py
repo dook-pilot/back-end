@@ -1,9 +1,7 @@
-def response(license_company_data, license_file_urls, rdw, image_url):
+def response(license_company_data, rdw):
     return ({
             "status": True,
             "errMsg": None,
-            "image_url": image_url,
-            "license_data_urls": license_file_urls if len(license_file_urls) > 0 else None,
             "license_plate_company_data": {
             "status": False,
             "errMsg": "No company data found!",
